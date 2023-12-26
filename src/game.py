@@ -2,12 +2,16 @@ import pygame, sys
 
 from src import keyboard
 from src.entities import PhysicsEntity
-from src.utils import load_image
+from src.utils import load_image, load_images
+from src.tilemap import Tilemap
+
 
 class Game:
     def __init__(self):
         pygame.display.set_caption("Ninja game by DaFluffyPotato")
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((1280, 960))
+        self.display = pygame.Surface((320, 240))
+
         self.clock = pygame.time.Clock()
         self.keys = keyboard.Keyboard("wasd").get_keys()
 
@@ -15,7 +19,13 @@ class Game:
         self.player_movement_x = [False, False]
         self.player_movement_y = [False, False]
 
+        self.tilemap = Tilemap(self)
+
         self.assets = {
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'large_decor': load_images('tiles/large_decor'),
+            'stone': load_images('tiles/stone'),
             'player': load_image('entities/player.png')
         }
 
@@ -35,6 +45,7 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == keys["up"]:
                     self.events["up"] = 1
+                    self.player.velocity[1] = -3.0 # TODO: CHANGE THIS CODE WTF
                 if event.key == keys["down"]:
                     self.events["down"] = 1
                 if event.key == keys["right"]:
@@ -58,14 +69,18 @@ class Game:
     def run(self):
         running = True
         while running:
-            self.screen.fill((14, 219, 248))
+            self.display.fill((14, 219, 248))
 
-            self.player.update((self.player_movement_x[0] - self.player_movement_x[1], 0))
-            self.player.render(self.screen)
+            self.tilemap.render(self.display)
+
+            self.player.update(self.tilemap, (self.player_movement_x[0] - self.player_movement_x[1], 0))
+            self.player.render(self.display)
 
             self.process_events()
             self.handle_input()
             running = not self.events["quit"]
+
+            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
             self.clock.tick(60)
 
