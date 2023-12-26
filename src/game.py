@@ -4,6 +4,7 @@ from src import keyboard
 from src.entities import PhysicsEntity
 from src.utils import load_image, load_images
 from src.tilemap import Tilemap
+from src.clouds import Clouds
 
 
 class Game:
@@ -15,9 +16,15 @@ class Game:
         self.clock = pygame.time.Clock()
         self.keys = keyboard.Keyboard("wasd").get_keys()
 
+        self._scroll = [0, 0]
+        self.render_scroll = (0, 0)
+
         self.player = PhysicsEntity(self, 'player', (50, 50), (8, 15))
         self.player_movement_x = [False, False]
         self.player_movement_y = [False, False]
+
+        self.camera_entity = None
+        self.set_camera_entity(self.player)
 
         self.tilemap = Tilemap(self)
 
@@ -26,8 +33,12 @@ class Game:
             'grass': load_images('tiles/grass'),
             'large_decor': load_images('tiles/large_decor'),
             'stone': load_images('tiles/stone'),
-            'player': load_image('entities/player.png')
+            'player': load_image('entities/player.png'),
+            'background': load_image('background.png'),
+            'clouds': load_images('clouds'),
         }
+
+        self.clouds = Clouds(self.assets["clouds"])
 
         self.events = {
             "quit": 0,
@@ -36,6 +47,14 @@ class Game:
             "right": 0,
             "left": 0,
         }
+
+    def set_camera_entity(self, entity):
+        self.camera_entity = entity
+
+    def update_camera(self):
+        self._scroll[0] += (self.camera_entity.get_rect().centerx - self.display.get_width() / 2 - self._scroll[0]) / 10
+        self._scroll[1] += (self.camera_entity.get_rect().centery - self.display.get_height() / 2 - self._scroll[1]) / 10
+        self.render_scroll = (int(self._scroll[0]), int(self._scroll[1]))
 
     def process_events(self):
         keys = self.keys
@@ -69,12 +88,16 @@ class Game:
     def run(self):
         running = True
         while running:
-            self.display.fill((14, 219, 248))
-
-            self.tilemap.render(self.display)
+            self.display.blit(self.assets["background"], (0, 0))
 
             self.player.update(self.tilemap, (self.player_movement_x[0] - self.player_movement_x[1], 0))
-            self.player.render(self.display)
+
+            self.update_camera()
+
+            self.clouds.update()
+            self.clouds.render(self.display, self.render_scroll)
+            self.tilemap.render(self.display, self.render_scroll)
+            self.player.render(self.display, self.render_scroll)
 
             self.process_events()
             self.handle_input()
