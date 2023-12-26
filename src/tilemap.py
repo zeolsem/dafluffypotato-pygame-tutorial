@@ -2,6 +2,8 @@ import pygame
 
 NEIGHBOR_OFFSETS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)]
 PHYSICS_TILES = {'grass', 'stone'}
+
+
 class Tilemap:
     def __init__(self, game, tile_size=16):
         self.game = game
@@ -29,12 +31,14 @@ class Tilemap:
                 rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
         return rects
 
-    def render(self, surf):
+    def render(self, surf, offset):
         for tile in self.offgrid_tiles:
             surf = self.game.assets[tile['type']][tile['variant']]
-            surf.blit(surf, tile['pos'])
+            pos = (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])
+            surf.blit(surf, pos)
 
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             tile_surf = self.game.assets[tile['type']][tile['variant']]
-            surf.blit(tile_surf, (tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size))
+            pos = (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1])
+            surf.blit(tile_surf, pos)
