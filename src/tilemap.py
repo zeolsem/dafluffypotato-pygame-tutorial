@@ -33,12 +33,20 @@ class Tilemap:
 
     def render(self, surf, offset):
         for tile in self.offgrid_tiles:
-            surf = self.game.assets[tile['type']][tile['variant']]
-            pos = (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])
-            surf.blit(surf, pos)
+            is_on_screen_x = (tile['pos'][0] + self.game.assets[tile['type']][tile['variant']].get_width()) > offset[0] and tile['pos'][0] < offset[0] + surf.get_width()
+            is_on_screen_y = (tile['pos'][1] + self.game.assets[tile['type']][tile['variant']].get_height()) > offset[1] and tile['pos'][1] < offset[1] + surf.get_height()
+            if is_on_screen_x and is_on_screen_y:
+                tile_surf = self.game.assets[tile['type']][tile['variant']]
+                pos = (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])
+                surf.blit(tile_surf, pos)
 
-        for loc in self.tilemap:
-            tile = self.tilemap[loc]
-            tile_surf = self.game.assets[tile['type']][tile['variant']]
-            pos = (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1])
-            surf.blit(tile_surf, pos)
+        for x in range(offset[0] // self.tile_size, (offset[0] + surf.get_width()) // self.tile_size + 1):
+            for y in range(offset[1] // self.tile_size, (offset[1] + surf.get_height()) // self.tile_size + 1):
+                loc = str(x) + ';' + str(y)
+                if loc in self.tilemap:
+                    tile = self.tilemap[loc]
+                    tile_surf = self.game.assets[tile['type']][tile['variant']]
+                    pos = (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1])
+                    surf.blit(tile_surf, pos)
+
+

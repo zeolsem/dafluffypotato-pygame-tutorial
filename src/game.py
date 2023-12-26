@@ -1,8 +1,8 @@
 import pygame, sys
 
 from src import keyboard
-from src.entities import PhysicsEntity
-from src.utils import load_image, load_images
+from src.entities import PhysicsEntity, Player
+from src.utils import load_image, load_images, Animation
 from src.tilemap import Tilemap
 from src.clouds import Clouds
 
@@ -13,21 +13,6 @@ class Game:
         self.screen = pygame.display.set_mode((1280, 960))
         self.display = pygame.Surface((320, 240))
 
-        self.clock = pygame.time.Clock()
-        self.keys = keyboard.Keyboard("wasd").get_keys()
-
-        self._scroll = [0, 0]
-        self.render_scroll = (0, 0)
-
-        self.player = PhysicsEntity(self, 'player', (50, 50), (8, 15))
-        self.player_movement_x = [False, False]
-        self.player_movement_y = [False, False]
-
-        self.camera_entity = None
-        self.set_camera_entity(self.player)
-
-        self.tilemap = Tilemap(self)
-
         self.assets = {
             'decor': load_images('tiles/decor'),
             'grass': load_images('tiles/grass'),
@@ -36,7 +21,27 @@ class Game:
             'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
             'clouds': load_images('clouds'),
+            'player_idle': Animation(load_images('entities/player/idle'), 6),
+            'player_run': Animation(load_images('entities/player/run'), 4),
+            'player_jump': Animation(load_images('entities/player/jump')),
+            'player_slide': Animation(load_images('entities/player/slide')),
+            'player_wall_slide': Animation(load_images('entities/player/wall_slide')),
         }
+
+        self.clock = pygame.time.Clock()
+        self.keys = keyboard.Keyboard("wasd").get_keys()
+
+        self._scroll = [0, 0]
+        self.render_scroll = (0, 0)
+
+        self.player = Player(self, (50, 50), (8, 15))
+        self.player_movement_x = [False, False]
+        self.player_movement_y = [False, False]
+
+        self.camera_entity = None
+        self.set_camera_entity(self.player)
+
+        self.tilemap = Tilemap(self)
 
         self.clouds = Clouds(self.assets["clouds"])
 
@@ -106,6 +111,7 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
             self.clock.tick(60)
+            pygame.display.set_caption("Ninja game by DaFluffyPotato | FPS: " + str(int(self.clock.get_fps())))
 
         pygame.quit()
         sys.exit()

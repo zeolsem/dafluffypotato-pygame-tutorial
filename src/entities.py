@@ -8,6 +8,13 @@ class PhysicsEntity:
         self.pos = list(pos)
         self.size = size
         self.velocity = [0.0, 0.0]
+
+        self.action = ''
+        self.animation = None
+        self.set_action("idle")
+        self.anim_offset = (-3, -3)
+        self.flip = False
+
         self.collisions = {
             "up": False,
             "down": False,
@@ -18,7 +25,12 @@ class PhysicsEntity:
     def get_rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
-    def update(self, tilemap, movement=(0, 0)):
+    def set_action(self, action):
+        if self.action != action:
+            self.action = action
+            self.animation = self.game.assets[self.type + '_' + self.action].copy()
+
+    def update(self, tilemap, movement):
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
         self.collisions = {
             "up": False,
@@ -51,9 +63,35 @@ class PhysicsEntity:
                     self.collisions["up"] = True
                 self.pos[1] = e_rect.y
 
+        if movement[0] > 0:
+            self.flip = False
+        elif movement[0] < 0:
+            self.flip = True
+
         self.velocity[1] = min(5.0, self.velocity[1] + 0.1)
         if self.collisions["down"] or self.collisions["up"]:
             self.velocity[1] = 0.0
 
+        self.animation.update()
+
     def render(self, surf, offset):
-        surf.blit(self.game.assets["player"], (self.pos[0] - offset[0], self.pos[1] - offset[1]))
+        pos = (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1])
+        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), pos)
+
+
+class Player(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, "player", pos, size)
+        self.air_time = 0
+
+    def update(self, tilemap, movement):
+        super().update(tilemap, movement=movement)
+        self.air_time += 1
+        if self.collisions["down"]:
+            self.air_time = 0
+        if self.air_time > 4:
+            self.set_action("jump")
+        elif movement[0] != 0:
+            self.set_action("run")
+        else:
+            self.set_action("idle")
