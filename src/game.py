@@ -42,6 +42,7 @@ class Game:
         self.set_camera_entity(self.player)
 
         self.tilemap = Tilemap(self)
+        self.tilemap.load('../maps/map.json')
 
         self.clouds = Clouds(self.assets["clouds"])
 
