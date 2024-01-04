@@ -1,19 +1,20 @@
 import pygame
 import os
 
-BASE_IMG_PATH = "data/images/"
+BASE_IMG_PATH = "../data/images/"
 
 
-def load_image(path):
+def load_image(path, editor=0):
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
     img.set_colorkey((0,0,0))
     return img
 
 
-def load_images(path):
+def load_images(path, editor=0):
+
     images = []
     for img_name in sorted(os.listdir(BASE_IMG_PATH + path)):
-        img = load_image(path + os.sep + img_name)
+        img = load_image(path + os.sep + img_name, editor)
         images.append(img)
     return images
 
@@ -36,5 +37,6 @@ class Animation:
             self.frame = min(self.frame + 1, len(self.images) * self.img_duration - 1)
             if self.frame >= self.img_duration * len(self.images) - 1:
                 self.done = True
+
     def img(self):
         return self.images[int(self.frame / self.img_duration)]

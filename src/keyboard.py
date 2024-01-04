@@ -18,5 +18,10 @@ class Keyboard():
                 "right": pygame.K_RIGHT,
             }
 
+        self.layout["lshift"] = pygame.K_LSHIFT
+        self.layout["g"] = pygame.K_g
+        self.layout["o"] = pygame.K_o
+        self.layout["t"] = pygame.K_t
+
     def get_keys(self):
         return self.layout
