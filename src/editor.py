@@ -1,5 +1,4 @@
 import os
-
 import pygame
 import sys
 
@@ -9,7 +8,6 @@ from src.tilemap import Tilemap
 
 RENDER_SCALE = 4
 
-print(os.getcwd())
 
 class Editor:
     def __init__(self):
