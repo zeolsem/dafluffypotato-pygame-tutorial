@@ -1,3 +1,5 @@
+import os
+
 import pygame
 import sys
 
@@ -7,6 +9,7 @@ from src.tilemap import Tilemap
 
 RENDER_SCALE = 4
 
+print(os.getcwd())
 
 class Editor:
     def __init__(self):
@@ -15,10 +18,10 @@ class Editor:
         self.display = pygame.Surface((320, 240))
 
         self.assets = {
-            'decor': load_images('tiles/decor', 1),
-            'grass': load_images('tiles/grass', 1),
-            'large_decor': load_images('tiles/large_decor', 1),
-            'stone': load_images('tiles/stone', 1),
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'large_decor': load_images('tiles/large_decor'),
+            'stone': load_images('tiles/stone'),
         }
 
         self.clock = pygame.time.Clock()
