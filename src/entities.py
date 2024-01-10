@@ -1,4 +1,7 @@
-import pygame
+import random
+
+import pygame, math
+from src.particle import Particle
 
 
 class PhysicsEntity:
@@ -103,7 +106,7 @@ class PhysicsEntity:
 
         self.last_movement = movement
 
-        self.velocity[1] = min(5.0, self.velocity[1] + 0.1)
+        self.velocity[1] = min(5.0, self.velocity[1] + 0.15)
         if self.collisions["down"] or self.collisions["up"]:
             self.velocity[1] = 0.0
 
@@ -120,10 +123,14 @@ class Player(PhysicsEntity):
         super().__init__(game, "player", pos, size)
         self.air_time = 0
         self.jumps = 2
+        self.max_speed = 2.0
         self.wall_slide = False
+        self.dashing = 0
 
     def update(self, tilemap, movement):
+        self.velocity[0] = min(max(-self.max_speed, self.velocity[0]), self.max_speed)
         super().update(tilemap, movement=movement)
+
 
         self.air_time += 1
         if self.collisions["down"]:
@@ -147,23 +154,54 @@ class Player(PhysicsEntity):
             else:
                 self.set_action("idle")
 
+        if self.dashing > 0:
+            self.dashing = max(0, self.dashing - 1)
+        else:
+            self.dashing = min(0, self.dashing + 1)
+        if abs(self.dashing) > 50:
+            self.max_speed = 8
+            self.velocity[0] = abs(self.dashing) / self.dashing * 8
+            if abs(self.dashing) == 55:
+                self.velocity[0] *= 0.2
+            p_vel = [abs(self.dashing) / self.dashing * random.random() * 3, 0]
+            self.game.particles.append(
+                Particle(self.game, 'particle', self.get_rect().midtop, p_vel, frame=random.randint(0, 7)))
+        if abs(self.dashing) in {60, 50}:
+            for i in range(20):
+                angle = random.random() * math.pi * 2
+                speed = random.random() * 0.5 + 0.5
+                p_vel = [math.cos(angle) * speed, math.sin(angle) * speed]
+                self.game.particles.append(Particle(self.game, 'particle', self.get_rect().midtop, p_vel, frame=random.randint(0, 7)))
+    def render(self, surf, offset=(0, 0)):
+        if abs(self.dashing) <= 50:
+            super().render(surf, offset=offset)
+        else:
+            pass
+
     def jump(self):
         if self.wall_slide:
             if self.flip:
                 self.velocity[0] = 3.0
-                self.velocity[1] = -2.0
+                self.velocity[1] = -3.0
                 self.air_time = 5
                 self.jumps = max(0, self.jumps - 1)
                 return True
             elif not self.flip:
                 self.velocity[0] = -3.0
-                self.velocity[1] = -2.0
+                self.velocity[1] = -3.0
                 self.air_time = 5
                 self.jumps = max(0, self.jumps - 1)
                 return True
         elif self.jumps:
-            self.velocity[1] = -3.0
+            self.velocity[1] = -3.7
             self.jumps -= 1
             self.air_time = 5
             return True
         return False
+
+    def dash(self):
+        if not self.dashing:
+            if self.flip:
+                self.dashing = -60
+            else:
+                self.dashing = 60

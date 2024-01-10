@@ -31,6 +31,7 @@ class Game:
             'player_slide': Animation(load_images('entities/player/slide')),
             'player_wall_slide': Animation(load_images('entities/player/wall_slide')),
             'particle/leaf': Animation(load_images('particles/leaf'), img_dur=10, loop=False),
+            'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
         }
 
         self.clock = pygame.time.Clock()
@@ -104,6 +105,8 @@ class Game:
                     self.events["right"] = 1
                 if event.key == keys["left"]:
                     self.events["left"] = 1
+                if event.key == keys["lshift"]:
+                    self.player.dash()
             if event.type == pygame.KEYUP:
                 if event.key == keys["up"]:
                     self.events["up"] = 0
