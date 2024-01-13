@@ -118,6 +118,44 @@ class PhysicsEntity:
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), pos)
 
 
+class Enemy(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, "enemy", pos, size)
+
+        self.max_speed = 0.8
+        self.walking = 0
+
+    def update(self, tilemap, movement=(0, 0)):
+        if tilemap.solid_check((self.get_rect().centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
+            if self.collisions["left"] or self.collisions["right"]:
+                self.flip = not self.flip
+        else:
+            self.flip = not self.flip
+            self.velocity[0] = 0
+
+        if self.walking:
+            movement = (-0.5 if self.flip else 0.5, movement[1])
+            self.walking = max(0, self.walking - 1)
+        elif random.random() < 0.01:
+            self.walking = random.randint(30, 120)
+            self.velocity[0] = random.random() * 2 - 1
+
+        super().update(tilemap, movement=movement)
+
+        if movement[0] != 0:
+            self.set_action("run")
+        else:
+            self.set_action("idle")
+
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
+
+        gun_pos = (self.get_rect().centerx - offset[0], self.get_rect().centery - offset[1])
+        if self.flip:
+            surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (gun_pos[0] - 4, gun_pos[1]))
+        else:
+            surf.blit(self.game.assets['gun'], (gun_pos[0] + 4, gun_pos[1]))
+
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, "player", pos, size)

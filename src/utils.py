@@ -1,7 +1,7 @@
 import pygame
 import os
 
-BASE_IMG_PATH = os.path.realpath("data/images/") + os.sep
+BASE_IMG_PATH = os.path.realpath("../data/images/") + os.sep
 
 
 def load_image(path, editor=0):

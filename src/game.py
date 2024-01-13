@@ -4,7 +4,7 @@ import pygame, sys
 
 import random
 from src import keyboard
-from src.entities import Player
+from src.entities import Player, Enemy
 from src.particle import Particle
 from src.utils import load_image, load_images, Animation
 from src.tilemap import Tilemap
@@ -25,6 +25,8 @@ class Game:
             'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
             'clouds': load_images('clouds'),
+            'enemy_idle': Animation(load_images('entities/enemy/idle'), 6),
+            'enemy_run': Animation(load_images('entities/enemy/run'), 4),
             'player_idle': Animation(load_images('entities/player/idle'), 6),
             'player_run': Animation(load_images('entities/player/run'), 4),
             'player_jump': Animation(load_images('entities/player/jump')),
@@ -32,6 +34,8 @@ class Game:
             'player_wall_slide': Animation(load_images('entities/player/wall_slide')),
             'particle/leaf': Animation(load_images('particles/leaf'), img_dur=10, loop=False),
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
+            'gun': load_image('gun.png'),
+            'spawners': load_images('tiles/spawners'),
         }
 
         self.clock = pygame.time.Clock()
@@ -48,11 +52,20 @@ class Game:
         self.set_camera_entity(self.player)
 
         self.tilemap = Tilemap(self)
-        self.tilemap.load('maps/map.json')
+        self.tilemap.load('../maps/map.json')
 
         self.leaf_spawners = []
         for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
             self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13))
+
+        self.enemies = []
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+            print(spawner['variant'])
+            if spawner['variant'] == 0:
+                self.player.pos = spawner['pos']
+            else:
+                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))
+                print("ok")
 
         self.particles = []
 
@@ -136,6 +149,10 @@ class Game:
             self.clouds.update()
             self.clouds.render(self.display, self.render_scroll)
             self.tilemap.render(self.display, self.render_scroll)
+
+            for enemy in self.enemies.copy():
+                enemy.update(self.tilemap, (0, 0))
+                enemy.render(self.display, offset=self.render_scroll)
             self.player.render(self.display, self.render_scroll)
             self.draw_particles()
 
