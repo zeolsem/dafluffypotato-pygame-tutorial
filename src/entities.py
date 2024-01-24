@@ -136,6 +136,13 @@ class Enemy(PhysicsEntity):
         if self.walking:
             movement = (-0.5 if self.flip else 0.5, movement[1])
             self.walking = max(0, self.walking - 1)
+            if not self.walking:
+                dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
+                if abs(dis[1]) < 16:
+                    if self.flip and dis[0] < 0:
+                        self.game.projectiles.append([[self.get_rect().centerx - 7, self.get_rect().centery], -1.5, 0])
+                    if not self.flip and dis[0] > 0:
+                        self.game.projectiles.append([[self.get_rect().centerx + 7, self.get_rect().centery], 1.5, 0])
         elif random.random() < 0.01:
             self.walking = random.randint(30, 120)
             self.velocity[0] = random.random() * 2 - 1
@@ -154,7 +161,7 @@ class Enemy(PhysicsEntity):
         if self.flip:
             surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (gun_pos[0] - 4, gun_pos[1]))
         else:
-            surf.blit(self.game.assets['gun'], (gun_pos[0] + 4, gun_pos[1]))
+            surf.blit(self.game.assets['gun'], (gun_pos[0], gun_pos[1]))
 
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -199,7 +206,7 @@ class Player(PhysicsEntity):
         if abs(self.dashing) > 50:
             self.max_speed = 8
             self.velocity[0] = abs(self.dashing) / self.dashing * 8
-            if abs(self.dashing) == 55:
+            if abs(self.dashing) == 50:
                 self.velocity[0] *= 0.2
             p_vel = [abs(self.dashing) / self.dashing * random.random() * 3, 0]
             self.game.particles.append(
