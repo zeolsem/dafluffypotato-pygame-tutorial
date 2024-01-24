@@ -36,6 +36,7 @@ class Game:
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
             'gun': load_image('gun.png'),
             'spawners': load_images('tiles/spawners'),
+            'projectile': load_image('projectile.png'),
         }
 
         self.clock = pygame.time.Clock()
@@ -60,13 +61,12 @@ class Game:
 
         self.enemies = []
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
-            print(spawner['variant'])
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))
-                print("ok")
 
+        self.projectiles = []
         self.particles = []
 
         self.clouds = Clouds(self.assets["clouds"])
@@ -87,6 +87,11 @@ class Game:
         self._scroll[0] += (self.camera_entity.get_rect().centerx - self.display.get_width() / 2 - self._scroll[0]) / 10
         self._scroll[1] += (self.camera_entity.get_rect().centery - self.display.get_height() / 2 - self._scroll[1]) / 10
         self.render_scroll = (int(self._scroll[0]), int(self._scroll[1]))
+
+    def update_enemies(self):
+        for enemy in self.enemies.copy():
+            enemy.update(self.tilemap, (0, 0))
+            enemy.render(self.display, offset=self.render_scroll)
 
     def spawn_particle(self, particle):
         for rect in self.leaf_spawners:
@@ -150,12 +155,24 @@ class Game:
             self.clouds.render(self.display, self.render_scroll)
             self.tilemap.render(self.display, self.render_scroll)
 
-            for enemy in self.enemies.copy():
-                enemy.update(self.tilemap, (0, 0))
-                enemy.render(self.display, offset=self.render_scroll)
+            self.update_enemies() # ALSO RENDERS ENEMIES
             self.player.render(self.display, self.render_scroll)
-            self.draw_particles()
 
+            # [[x, y], direction, timer]
+            for projectile in self.projectiles.copy():
+                projectile[0][0] += projectile[1]
+                projectile[2] += 1
+                img = self.assets['projectile']
+                self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - self.render_scroll[0], projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
+                if self.tilemap.solid_check(projectile[0]):
+                    self.projectiles.remove(projectile)
+                elif projectile[2] > 360:
+                    self.projectiles.remove(projectile)
+                elif abs(self.player.dashing) < 50:
+                    if pygame.Rect(self.player.get_rect().centerx - 4, self.player.get_rect().centery - 4, 8, 8).collidepoint(projectile[0]):
+                        self.projectiles.remove(projectile)
+
+            self.draw_particles()
             self.process_events()
             self.handle_input()
             running = not self.events["quit"]
