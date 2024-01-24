@@ -4,7 +4,8 @@ import pygame, sys
 
 import random
 from src import keyboard
-from src.entities import Player, Enemy
+from src.entities import Player
+from src.level_loader import LevelLoader
 from src.particle import Particle
 from src.utils import load_image, load_images, Animation
 from src.tilemap import Tilemap
@@ -42,32 +43,19 @@ class Game:
         self.clock = pygame.time.Clock()
         self.keys = keyboard.Keyboard("wasd").get_keys()
 
-        self._scroll = [0, 0]
-        self.render_scroll = (0, 0)
-
         self.player = Player(self, (50, 50), (8, 15))
         self.player_movement_x = [False, False]
         self.player_movement_y = [False, False]
 
         self.camera_entity = None
         self.set_camera_entity(self.player)
+        self.render_scroll = (0, 0)
+        self._scroll = [0, 0]
 
         self.tilemap = Tilemap(self)
-        self.tilemap.load('../maps/map.json')
-
-        self.leaf_spawners = []
-        for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
-            self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13))
-
-        self.enemies = []
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
-            if spawner['variant'] == 0:
-                self.player.pos = spawner['pos']
-            else:
-                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))
-
-        self.projectiles = []
-        self.particles = []
+        self.loader = LevelLoader(self)
+        # self.tilemap.load('../maps/map.json')
+        self.loader.load_level(1)
 
         self.clouds = Clouds(self.assets["clouds"])
 
@@ -92,21 +80,6 @@ class Game:
         for enemy in self.enemies.copy():
             enemy.update(self.tilemap, (0, 0))
             enemy.render(self.display, offset=self.render_scroll)
-
-    def spawn_particle(self, particle):
-        for rect in self.leaf_spawners:
-            if (random.random() * 49999 < rect.width * rect.height):
-                pos = [rect.x + random.random() * rect.width, rect.y + random.random() * rect.height]
-                self.particles.append(Particle(self, 'leaf', pos, velocity=[0.1, 0.3], frame=random.randint(0, 20)))
-
-    def draw_particles(self):
-        for particle in self.particles.copy():
-            kill = particle.update()
-            particle.render(self.display, offset=self.render_scroll)
-            if particle.type == 'leaf':
-                particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3
-            if kill:
-                self.particles.remove(particle)
 
     def process_events(self):
         keys = self.keys
@@ -141,13 +114,27 @@ class Game:
         if self.events["up"] != self.events["past_up"] and self.events["up"]:
             self.player.jump()
 
+    def handle_projectiles(self):
+        for projectile in self.projectiles.copy():
+            projectile[0][0] += projectile[1]
+            projectile[2] += 1
+            img = self.assets['projectile']
+            self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - self.render_scroll[0],
+                                    projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
+            if self.tilemap.solid_check(projectile[0]):
+                self.projectiles.remove(projectile)
+            elif projectile[2] > 360:
+                self.projectiles.remove(projectile)
+            elif abs(self.player.dashing) < 50:
+                if pygame.Rect(self.player.get_rect().centerx - 4, self.player.get_rect().centery - 4, 8, 8).collidepoint(projectile[0]):
+                    self.projectiles.remove(projectile)
+
     def run(self):
         running = True
         while running:
             self.display.blit(self.assets["background"], (0, 0))
 
             self.player.update(self.tilemap, (self.player_movement_x[0] - self.player_movement_x[1], 0))
-
 
             self.update_camera()
 
@@ -159,20 +146,9 @@ class Game:
             self.player.render(self.display, self.render_scroll)
 
             # [[x, y], direction, timer]
-            for projectile in self.projectiles.copy():
-                projectile[0][0] += projectile[1]
-                projectile[2] += 1
-                img = self.assets['projectile']
-                self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - self.render_scroll[0], projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
-                if self.tilemap.solid_check(projectile[0]):
-                    self.projectiles.remove(projectile)
-                elif projectile[2] > 360:
-                    self.projectiles.remove(projectile)
-                elif abs(self.player.dashing) < 50:
-                    if pygame.Rect(self.player.get_rect().centerx - 4, self.player.get_rect().centery - 4, 8, 8).collidepoint(projectile[0]):
-                        self.projectiles.remove(projectile)
+            self.handle_projectiles()
 
-            self.draw_particles()
+            self.loader.draw_particles()
             self.process_events()
             self.handle_input()
             running = not self.events["quit"]
