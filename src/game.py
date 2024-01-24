@@ -7,6 +7,7 @@ from src import keyboard
 from src.entities import Player
 from src.level_loader import LevelLoader
 from src.particle import Particle
+from src.spark import Spark
 from src.utils import load_image, load_images, Animation
 from src.tilemap import Tilemap
 from src.clouds import Clouds
@@ -46,18 +47,22 @@ class Game:
         self.player = Player(self, (50, 50), (8, 15))
         self.player_movement_x = [False, False]
         self.player_movement_y = [False, False]
+        self.player.dead = 0
+        self.enemies = []
 
         self.camera_entity = None
         self.set_camera_entity(self.player)
         self.render_scroll = (0, 0)
         self._scroll = [0, 0]
+        self.screenshake = 0
 
         self.tilemap = Tilemap(self)
         self.loader = LevelLoader(self)
         # self.tilemap.load('../maps/map.json')
-        self.loader.load_level(1)
+        self.loader.load_level(0)
 
         self.clouds = Clouds(self.assets["clouds"])
+        self.sparks = []
 
         self.events = {
             "quit": 0,
@@ -78,8 +83,14 @@ class Game:
 
     def update_enemies(self):
         for enemy in self.enemies.copy():
-            enemy.update(self.tilemap, (0, 0))
+            kill = enemy.update(self.tilemap, (0, 0))
             enemy.render(self.display, offset=self.render_scroll)
+            if kill:
+                self.enemies.remove(enemy)
+                self.sparks.append(Spark(enemy.get_rect().center, 0, 5))
+                self.sparks.append(Spark(enemy.get_rect().center, math.pi, 5))
+                for i in range(0, 30):
+                    self.sparks.append(Spark(enemy.get_rect().center, random.random() * math.pi * 2, 2 * random.random()))
 
     def process_events(self):
         keys = self.keys
@@ -114,6 +125,12 @@ class Game:
         if self.events["up"] != self.events["past_up"] and self.events["up"]:
             self.player.jump()
 
+    def draw_sparks(self):
+        for spark in self.sparks.copy():
+            kill = spark.update()
+            spark.render(self.display, offset=self.render_scroll)
+            if kill:
+                self.sparks.remove(spark)
     def handle_projectiles(self):
         for projectile in self.projectiles.copy():
             projectile[0][0] += projectile[1]
@@ -123,11 +140,24 @@ class Game:
                                     projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
             if self.tilemap.solid_check(projectile[0]):
                 self.projectiles.remove(projectile)
+                for i in range(0, 4):
+                    self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 * random.random()))
             elif projectile[2] > 360:
                 self.projectiles.remove(projectile)
             elif abs(self.player.dashing) < 50:
                 if pygame.Rect(self.player.get_rect().centerx - 4, self.player.get_rect().centery - 4, 8, 8).collidepoint(projectile[0]):
                     self.projectiles.remove(projectile)
+                    self.player.dead += 1
+                    self.screenshake = max(32, self.screenshake)
+                    for i in range(0, 4):
+                        angle = random.random() * math.pi * 2
+                        speed = random.random() * 5
+                        self.sparks.append(Spark(projectile[0], angle, 2 + random.random()))
+                        self.loader.particles.append(Particle(self, 'particle',
+                                                              self.player.get_rect().center,
+                                                              velocity=[math.cos(angle) * speed * 0.5,
+                                                                        math.sin(angle) * speed * 0.5],
+                                                              frame=random.randint(0, 7)))
 
     def run(self):
         running = True
@@ -140,20 +170,27 @@ class Game:
 
             self.clouds.update()
             self.clouds.render(self.display, self.render_scroll)
+
             self.tilemap.render(self.display, self.render_scroll)
+            self.handle_projectiles()
+
+            self.loader.spawn_particles()
+            self.loader.draw_particles()
 
             self.update_enemies() # ALSO RENDERS ENEMIES
             self.player.render(self.display, self.render_scroll)
 
             # [[x, y], direction, timer]
-            self.handle_projectiles()
 
-            self.loader.draw_particles()
+            self.draw_sparks()
+
             self.process_events()
             self.handle_input()
             running = not self.events["quit"]
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
+            screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
+            self.screenshake = max(0, self.screenshake - 1)
+            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)
             pygame.display.update()
             self.clock.tick(60)
             pygame.display.set_caption("Ninja game by DaFluffyPotato | FPS: " + str(int(self.clock.get_fps())))

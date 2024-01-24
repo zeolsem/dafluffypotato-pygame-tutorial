@@ -1,3 +1,4 @@
+import random
 import pygame
 import os
 
@@ -40,3 +41,4 @@ class Animation:
 
     def img(self):
         return self.images[int(self.frame / self.img_duration)]
+

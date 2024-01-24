@@ -33,11 +33,14 @@ class LevelLoader:
         self.game.projectiles = []
         self.game.particles = []
 
-    def spawn_particle(self):
+        self.game.player.dead = 0
+        self.game.player.air_time = 0
+
+    def spawn_particles(self):
         for rect in self.leaf_spawners:
             if random.random() * 49999 < rect.width * rect.height:
                 pos = [rect.x + random.random() * rect.width, rect.y + random.random() * rect.height]
-                self.particles.append(Particle(self, 'leaf', pos, velocity=[0.1, 0.3], frame=random.randint(0, 20)))
+                self.particles.append(Particle(self.game, 'leaf', pos, velocity=[0.1, 0.3], frame=random.randint(0, 20)))
 
     def draw_particles(self):
         for particle in self.particles.copy():
