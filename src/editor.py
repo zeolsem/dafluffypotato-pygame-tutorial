@@ -37,10 +37,6 @@ class Editor:
         self.camera_pos = [0, 0]
 
         self.tilemap = Tilemap(self, tile_size=16)
-        try:
-            self.tilemap.load(os.path.normpath('../maps/map.json'))
-        except FileNotFoundError:
-            pass
 
         self.tile_list = list(self.assets)
         self.tile_group = 0
@@ -112,7 +108,7 @@ class Editor:
                     self.events["g"] = not self.events["g"]
                     self.ongrid = self.events["g"]
                 if event.key == keys["o"]:
-                    self.tilemap.save('../maps/map.json')
+                    self.save()
                 if event.key == keys["t"]:
                     self.tilemap.autotile()
 
@@ -132,6 +128,11 @@ class Editor:
         self.camera_movement = [self.events["left"], self.events["right"], self.events["up"], self.events["down"]]
 
     def run(self):
+        print("select map to edit")
+        for i, map_name in enumerate(sorted(os.listdir(os.path.normpath('data/maps')))):
+            print(str(i) + ': ' + map_name)
+        level = input("map id: ")
+        self.tilemap.load(os.path.normpath('data/maps/' + str(level) + '.json'))
         running = True
         while running:
             self.display.fill((0, 0, 0))
@@ -177,6 +178,9 @@ class Editor:
 
         pygame.quit()
         sys.exit()
+
+    def save(self):
+        self.tilemap.save(os.path.normpath('data/maps/{}.json'.format(input("map name: "))))
 
 
 if __name__ == "__main__":

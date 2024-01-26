@@ -17,7 +17,8 @@ class LevelLoader:
         self.transition = -30
 
     def load_level(self, map_id):
-        self.game.tilemap.load(os.path.normpath('../data/maps/' + str(map_id) + '.json'))
+        self.game.tilemap.load(os.path.normpath('data/maps/' + str(map_id) + '.json'))
+        print('loaded map ' + str(map_id))
         self.game.loader.particles.clear()
         self.game.projectiles.clear()
 
@@ -45,7 +46,7 @@ class LevelLoader:
         if not len(self.game.enemies):
             self.transition += 1
             if self.transition > 30:
-                self.game.level = min(self.game.level + 1, len(os.listdir(os.path.normpath('../data/maps'))) - 1)
+                self.game.level = min(self.game.level + 1, len(os.listdir(os.path.normpath('data/maps'))) - 1)
                 self.load_level(self.game.level)
         if self.transition < 0:
             self.transition += 1

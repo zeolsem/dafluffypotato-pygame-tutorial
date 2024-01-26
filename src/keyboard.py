@@ -23,6 +23,8 @@ class Keyboard():
         self.layout["g"] = pygame.K_g
         self.layout["o"] = pygame.K_o
         self.layout["t"] = pygame.K_t
+        # debug only
+        self.layout["n"] = pygame.K_n
 
     def get_keys(self):
         return self.layout

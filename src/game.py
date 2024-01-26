@@ -16,6 +16,7 @@ from clouds import Clouds
 
 class Game:
     def __init__(self):
+        self.debug = True
         self.projectiles = []
         pygame.display.set_caption("Ninja game by DaFluffyPotato")
         self.screen = pygame.display.set_mode((1280, 960))
@@ -45,11 +46,11 @@ class Game:
         }
 
         self.sfx = {
-            'jump': pygame.mixer.Sound(os.path.normpath('../data/sfx/jump.wav')),
-            'dash': pygame.mixer.Sound(os.path.normpath('../data/sfx/dash.wav')),
-            'shoot': pygame.mixer.Sound(os.path.normpath('../data/sfx/shoot.wav')),
-            'hit': pygame.mixer.Sound(os.path.normpath('../data/sfx/hit.wav')),
-            'ambience': pygame.mixer.Sound(os.path.normpath('../data/sfx/ambience.wav')),
+            'jump': pygame.mixer.Sound(os.path.normpath('data/sfx/jump.wav')),
+            'dash': pygame.mixer.Sound(os.path.normpath('data/sfx/dash.wav')),
+            'shoot': pygame.mixer.Sound(os.path.normpath('data/sfx/shoot.wav')),
+            'hit': pygame.mixer.Sound(os.path.normpath('data/sfx/hit.wav')),
+            'ambience': pygame.mixer.Sound(os.path.normpath('data/sfx/ambience.wav')),
         }
 
         self.sfx['ambience'].set_volume(0.2)
@@ -72,6 +73,12 @@ class Game:
         self.render_scroll = (0, 0)
         self._scroll = [0, 0]
         self.screenshake = 0
+        self.render_layers = {
+            "background": [],
+            "tileset": [],
+            "entities": [],
+            "particles": [],
+        }
 
         self.tilemap = Tilemap(self)
         self.loader = LevelLoader(self)
@@ -112,6 +119,11 @@ class Game:
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.events["quit"] = 1
             if event.type == pygame.KEYDOWN:
+                #debug only
+                if event.key == keys["n"] and self.debug:
+                    self.level = min(self.level + 1, len(os.listdir(os.path.normpath('data/maps'))) - 1)
+                    self.loader.load_level(self.level)
+                #
                 if event.key == keys["up"]:
                     self.events["up"] = 1
                 if event.key == keys["down"]:
@@ -168,7 +180,7 @@ class Game:
 
     def run(self):
         running = True
-        pygame.mixer.music.load(os.path.normpath('../data/music.wav'))
+        pygame.mixer.music.load(os.path.normpath('data/music.wav'))
         pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(-1)
         self.sfx['ambience'].play(-1)
