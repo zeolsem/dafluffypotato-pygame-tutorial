@@ -143,11 +143,13 @@ class Enemy(PhysicsEntity):
                 dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
                 if abs(dis[1]) < 16:
                     if self.flip and dis[0] < 0:
+                        self.game.sfx['shoot'].play()
                         self.game.projectiles.append([[self.get_rect().centerx - 7, self.get_rect().centery], -3, 0])
                         for i in range(7):
                             self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi,
                                                           2 * random.random()))
                     if not self.flip and dis[0] > 0:
+                        self.game.sfx['shoot'].play()
                         self.game.projectiles.append([[self.get_rect().centerx + 7, self.get_rect().centery], 3, 0])
                         for i in range(7):
                             self.game.sparks.append(
@@ -167,6 +169,7 @@ class Enemy(PhysicsEntity):
 
         if abs(self.game.player.dashing) >= 50:
             if self.get_rect().colliderect(self.game.player.get_rect()):
+                self.game.sfx['hit'].play()
                 self.enemy_death()
                 return True
 
@@ -282,7 +285,10 @@ class Player(PhysicsEntity):
             pass
 
     def jump(self):
+        if self.dead:
+            return
         if self.wall_slide:
+            self.game.sfx['jump'].play()
             if self.flip:
                 self.velocity[0] = 3.0
             elif not self.flip:
@@ -292,6 +298,7 @@ class Player(PhysicsEntity):
             self.jumps = max(0, self.jumps - 1)
             return True
         elif self.jumps:
+            self.game.sfx['jump'].play()
             self.velocity[1] = -3.7
             self.jumps -= 1
             self.air_time = 5
@@ -302,6 +309,7 @@ class Player(PhysicsEntity):
         if self.dead:
             return
         if not self.dashing:
+            self.game.sfx['dash'].play()
             if direction == 1:
                 self.dashing = 60
             elif direction == -1:
