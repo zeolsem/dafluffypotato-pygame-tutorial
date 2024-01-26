@@ -1,7 +1,7 @@
 import pygame
 import sys
 
-from import keyboard
+import keyboard
 from utils import load_images
 from tilemap import Tilemap
 
