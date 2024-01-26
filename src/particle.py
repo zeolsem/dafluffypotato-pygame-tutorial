@@ -1,3 +1,7 @@
+import math
+import random
+
+
 class Particle:
     def __init__(self, game, p_type, pos, velocity=[0, 0], frame=0):
         self.game = game
@@ -21,4 +25,12 @@ class Particle:
 
     def render(self, surf, offset=(0, 0)):
         img = self.animation.img()
-        surf.blit(img, (self.pos[0] - offset[0] + img.get_width()//2, self.pos[1] - offset[1] + img.get_height()//2))
+        surf.blit(img, (self.pos[0] - offset[0] - img.get_width()//2, self.pos[1] - offset[1] - img.get_height()//2))
+
+
+def spawn_particle(game, source):
+    angle = random.random() * math.pi * 2
+    speed = random.random() * 0.5 + 0.5
+    p_vel = [math.cos(angle) * speed, math.sin(angle) * speed]
+    p = Particle(game, 'particle', source.get_rect().center, p_vel, frame=random.randint(0, 7))
+    game.loader.particles.append(p)

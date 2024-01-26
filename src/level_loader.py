@@ -1,4 +1,5 @@
 import math
+import os
 import random
 import pygame
 
@@ -13,9 +14,12 @@ class LevelLoader:
         self.particles = []
         self.game = game
         self.leaf_spawners = []
+        self.transition = -30
 
     def load_level(self, map_id):
         self.game.tilemap.load('../data/maps/' + str(map_id) + '.json')
+        self.game.loader.particles.clear()
+        self.game.projectiles.clear()
 
         self._scroll = self.game._scroll = [0, 0]
         self.render_scroll = self.game.render_scroll = (0, 0)
@@ -33,11 +37,31 @@ class LevelLoader:
         self.game.projectiles = []
         self.game.particles = []
 
-    def spawn_particle(self):
+        self.game.player.dead = 0
+        self.game.player.air_time = 0
+        self.transition = -30
+
+    def eval_transition(self):
+        if not len(self.game.enemies):
+            self.transition += 1
+            if self.transition > 30:
+                self.game.level = min(self.game.level + 1, len(os.listdir('../data/maps')) - 1)
+                self.load_level(self.game.level)
+        if self.transition < 0:
+            self.transition += 1
+
+        if self.transition:
+            transition_surf = pygame.Surface(self.game.display.get_size())
+            circle_center = (self.game.display.get_width()//2, self.game.display.get_height()//2)
+            pygame.draw.circle(transition_surf, (255, 255, 255), circle_center, (30 - abs(self.transition)) * 8)
+            transition_surf.set_colorkey((255, 255, 255))
+            self.game.display.blit(transition_surf, (0, 0))
+
+    def spawn_particles(self):
         for rect in self.leaf_spawners:
             if random.random() * 49999 < rect.width * rect.height:
                 pos = [rect.x + random.random() * rect.width, rect.y + random.random() * rect.height]
-                self.particles.append(Particle(self, 'leaf', pos, velocity=[0.1, 0.3], frame=random.randint(0, 20)))
+                self.particles.append(Particle(self.game, 'leaf', pos, velocity=[0.1, 0.3], frame=random.randint(0, 20)))
 
     def draw_particles(self):
         for particle in self.particles.copy():
