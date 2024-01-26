@@ -1,4 +1,5 @@
 import math
+import os
 import random
 
 
@@ -8,7 +9,7 @@ class Particle:
         self.type = p_type
         self.pos = list(pos)
         self.velocity = velocity
-        self.animation = self.game.assets['particle/' + p_type].copy()
+        self.animation = self.game.assets['particle' + os.sep + p_type].copy()
         self.animation.frame = frame
 
     def update(self):

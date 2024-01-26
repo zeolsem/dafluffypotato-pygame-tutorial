@@ -1,8 +1,7 @@
-import random
 import pygame
 import os
 
-BASE_IMG_PATH = os.path.realpath("../data/images/") + os.sep
+BASE_IMG_PATH = os.path.realpath(os.path.normpath("../data/images/")) + os.sep
 
 
 def load_image(path):

@@ -1,4 +1,5 @@
 import math
+import os
 
 import pygame, sys
 
@@ -22,33 +23,33 @@ class Game:
         self.display_2 = pygame.Surface((320, 240))
 
         self.assets = {
-            'decor': load_images('tiles/decor'),
-            'grass': load_images('tiles/grass'),
-            'large_decor': load_images('tiles/large_decor'),
-            'stone': load_images('tiles/stone'),
-            'player': load_image('entities/player.png'),
-            'background': load_image('background.png'),
-            'clouds': load_images('clouds'),
-            'enemy_idle': Animation(load_images('entities/enemy/idle'), 6),
-            'enemy_run': Animation(load_images('entities/enemy/run'), 4),
-            'player_idle': Animation(load_images('entities/player/idle'), 6),
-            'player_run': Animation(load_images('entities/player/run'), 4),
-            'player_jump': Animation(load_images('entities/player/jump')),
-            'player_slide': Animation(load_images('entities/player/slide')),
-            'player_wall_slide': Animation(load_images('entities/player/wall_slide')),
-            'particle/leaf': Animation(load_images('particles/leaf'), img_dur=10, loop=False),
-            'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
-            'gun': load_image('gun.png'),
-            'spawners': load_images('tiles/spawners'),
-            'projectile': load_image('projectile.png'),
+            'decor': load_images(os.path.normpath('tiles/decor')),
+            'grass': load_images(os.path.normpath('tiles/grass')),
+            'large_decor': load_images(os.path.normpath('tiles/large_decor')),
+            'stone': load_images(os.path.normpath('tiles/stone')),
+            'player': load_image(os.path.normpath('entities/player.png')),
+            'background': load_image(os.path.normpath('background.png')),
+            'clouds': load_images(os.path.normpath('clouds')),
+            'enemy_idle': Animation(load_images(os.path.normpath('entities/enemy/idle')), 6),
+            'enemy_run': Animation(load_images(os.path.normpath('entities/enemy/run')), 4),
+            'player_idle': Animation(load_images(os.path.normpath('entities/player/idle')), 6),
+            'player_run': Animation(load_images(os.path.normpath('entities/player/run')), 4),
+            'player_jump': Animation(load_images(os.path.normpath('entities/player/jump'))),
+            'player_slide': Animation(load_images(os.path.normpath('entities/player/slide'))),
+            'player_wall_slide': Animation(load_images(os.path.normpath('entities/player/wall_slide'))),
+            'particle/leaf': Animation(load_images(os.path.normpath('particles/leaf')), img_dur=10, loop=False),
+            'particle/particle': Animation(load_images(os.path.normpath('particles/particle')), img_dur=6, loop=False),
+            'gun': load_image(os.path.normpath('gun.png')),
+            'spawners': load_images(os.path.normpath('tiles/spawners')),
+            'projectile': load_image(os.path.normpath('projectile.png')),
         }
 
         self.sfx = {
-            'jump': pygame.mixer.Sound('../data/sfx/jump.wav'),
-            'dash': pygame.mixer.Sound('../data/sfx/dash.wav'),
-            'shoot': pygame.mixer.Sound('../data/sfx/shoot.wav'),
-            'hit': pygame.mixer.Sound('../data/sfx/hit.wav'),
-            'ambience': pygame.mixer.Sound('../data/sfx/ambience.wav'),
+            'jump': pygame.mixer.Sound(os.path.normpath('../data/sfx/jump.wav')),
+            'dash': pygame.mixer.Sound(os.path.normpath('../data/sfx/dash.wav')),
+            'shoot': pygame.mixer.Sound(os.path.normpath('../data/sfx/shoot.wav')),
+            'hit': pygame.mixer.Sound(os.path.normpath('../data/sfx/hit.wav')),
+            'ambience': pygame.mixer.Sound(os.path.normpath('../data/sfx/ambience.wav')),
         }
 
         self.sfx['ambience'].set_volume(0.2)
@@ -74,7 +75,6 @@ class Game:
 
         self.tilemap = Tilemap(self)
         self.loader = LevelLoader(self)
-        # self.tilemap.load('../maps/map.json')
         self.level = 0
         self.loader.load_level(self.level)
 
@@ -168,7 +168,7 @@ class Game:
 
     def run(self):
         running = True
-        pygame.mixer.music.load('../data/music.wav')
+        pygame.mixer.music.load(os.path.normpath('../data/music.wav'))
         pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(-1)
         self.sfx['ambience'].play(-1)
