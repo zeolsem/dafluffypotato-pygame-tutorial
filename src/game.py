@@ -15,6 +15,7 @@ from src.clouds import Clouds
 
 class Game:
     def __init__(self):
+        self.projectiles = []
         pygame.display.set_caption("Ninja game by DaFluffyPotato")
         self.screen = pygame.display.set_mode((1280, 960))
         self.display = pygame.Surface((320, 240))
@@ -59,7 +60,8 @@ class Game:
         self.tilemap = Tilemap(self)
         self.loader = LevelLoader(self)
         # self.tilemap.load('../maps/map.json')
-        self.loader.load_level(0)
+        self.level = 0
+        self.loader.load_level(self.level)
 
         self.clouds = Clouds(self.assets["clouds"])
         self.sparks = []
@@ -89,7 +91,7 @@ class Game:
                 self.enemies.remove(enemy)
                 self.sparks.append(Spark(enemy.get_rect().center, 0, 5))
                 self.sparks.append(Spark(enemy.get_rect().center, math.pi, 5))
-                for i in range(0, 30):
+                for i in range(0, 15):
                     self.sparks.append(Spark(enemy.get_rect().center, random.random() * math.pi * 2, 2 * random.random()))
 
     def process_events(self):
@@ -108,7 +110,7 @@ class Game:
                 if event.key == keys["left"]:
                     self.events["left"] = 1
                 if event.key == keys["lshift"]:
-                    self.player.dash()
+                    self.player.dash(self.events["right"] - self.events["left"])
             if event.type == pygame.KEYUP:
                 if event.key == keys["up"]:
                     self.events["up"] = 0
@@ -140,7 +142,7 @@ class Game:
                                     projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
             if self.tilemap.solid_check(projectile[0]):
                 self.projectiles.remove(projectile)
-                for i in range(0, 4):
+                for i in range(0, 6):
                     self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 * random.random()))
             elif projectile[2] > 360:
                 self.projectiles.remove(projectile)
@@ -149,7 +151,7 @@ class Game:
                     self.projectiles.remove(projectile)
                     self.player.dead += 1
                     self.screenshake = max(32, self.screenshake)
-                    for i in range(0, 4):
+                    for i in range(20):
                         angle = random.random() * math.pi * 2
                         speed = random.random() * 5
                         self.sparks.append(Spark(projectile[0], angle, 2 + random.random()))
@@ -188,6 +190,7 @@ class Game:
             self.handle_input()
             running = not self.events["quit"]
 
+            self.loader.eval_transition()
             screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
             self.screenshake = max(0, self.screenshake - 1)
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)

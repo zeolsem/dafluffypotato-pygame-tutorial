@@ -16,6 +16,7 @@ class PhysicsEntity:
         self.max_speed = 2.0
         self.wall_slide = False
         self.slideable = False
+        self.on_ground = False
 
         self.action = ''
         self.animation = None
@@ -118,7 +119,6 @@ class PhysicsEntity:
         pos = (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1])
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), pos)
 
-
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, "enemy", pos, size)
@@ -147,7 +147,7 @@ class Enemy(PhysicsEntity):
                                                           2 * random.random()))
                     if not self.flip and dis[0] > 0:
                         self.game.projectiles.append([[self.get_rect().centerx + 7, self.get_rect().centery], 3, 0])
-                        for i in range(4):
+                        for i in range(7):
                             self.game.sparks.append(
                                 Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 * random.random()))
 
@@ -176,7 +176,6 @@ class Enemy(PhysicsEntity):
         else:
             surf.blit(self.game.assets['gun'], (gun_pos[0], gun_pos[1]))
 
-
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, "player", pos, size)
@@ -195,8 +194,9 @@ class Player(PhysicsEntity):
 
         if self.dead:
             self.dead += 1
-            if self.dead > 20:
-                self.game.loader.load_level(0)
+            self.game.loader.transition += 1
+            if self.dead > 30:
+                self.game.loader.load_level(self.game.level)
                 self.dead = 0
             return
 
@@ -207,6 +207,9 @@ class Player(PhysicsEntity):
         if self.collisions["down"]:
             self.air_time = 0
             self.jumps = 2
+            self.on_ground = True
+        else:
+            self.on_ground = False
 
         for rect in tilemap.physics_rects_around(self.pos):
             if rect.top <= self.get_rect().bottom and abs(rect.centerx - self.get_rect().centerx) < 8:
@@ -250,6 +253,9 @@ class Player(PhysicsEntity):
                 self.game.loader.particles.append(
                     Particle(self.game, 'particle', self.get_rect().center, p_vel, frame=random.randint(0, 7)))
 
+        if not self.collisions["down"] and self.jumps >= 2 and self.air_time > 5:
+            self.jumps -= 1
+
     def render(self, surf, offset=(0, 0)):
         if self.dead:
             return
@@ -262,16 +268,12 @@ class Player(PhysicsEntity):
         if self.wall_slide:
             if self.flip:
                 self.velocity[0] = 3.0
-                self.velocity[1] = -3.0
-                self.air_time = 5
-                self.jumps = max(0, self.jumps - 1)
-                return True
             elif not self.flip:
                 self.velocity[0] = -3.0
-                self.velocity[1] = -3.0
-                self.air_time = 5
-                self.jumps = max(0, self.jumps - 1)
-                return True
+            self.velocity[1] = -3.0
+            self.air_time = 5
+            self.jumps = max(0, self.jumps - 1)
+            return True
         elif self.jumps:
             self.velocity[1] = -3.7
             self.jumps -= 1
@@ -279,9 +281,11 @@ class Player(PhysicsEntity):
             return True
         return False
 
-    def dash(self):
+    def dash(self, direction):
         if not self.dashing:
-            if self.flip:
+            if direction == 1:
+                self.dashing = 60
+            elif direction == -1:
                 self.dashing = -60
             else:
-                self.dashing = 60
+                self.dashing = 60 * (-1 if self.flip else 1)
