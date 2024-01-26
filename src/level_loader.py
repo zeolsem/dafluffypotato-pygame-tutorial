@@ -3,8 +3,8 @@ import os
 import random
 import pygame
 
-from src.entities import Enemy
-from src.particle import Particle
+from entities import Enemy
+from particle import Particle
 
 
 class LevelLoader:

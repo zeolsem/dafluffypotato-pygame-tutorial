@@ -1,9 +1,9 @@
 import pygame
 import sys
 
-from src import keyboard
-from src.utils import load_images
-from src.tilemap import Tilemap
+from import keyboard
+from utils import load_images
+from tilemap import Tilemap
 
 RENDER_SCALE = 4
 

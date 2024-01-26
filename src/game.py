@@ -3,14 +3,14 @@ import math
 import pygame, sys
 
 import random
-from src import keyboard
-from src.entities import Player
-from src.level_loader import LevelLoader
-from src.particle import spawn_particle
-from src.spark import Spark
-from src.utils import load_image, load_images, Animation
-from src.tilemap import Tilemap
-from src.clouds import Clouds
+import keyboard
+from entities import Player
+from level_loader import LevelLoader
+from particle import spawn_particle
+from spark import Spark
+from utils import load_image, load_images, Animation
+from tilemap import Tilemap
+from clouds import Clouds
 
 
 class Game:

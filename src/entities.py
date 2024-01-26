@@ -1,8 +1,8 @@
 import random
 import math
 import pygame
-from src.particle import Particle, spawn_particle
-from src.spark import Spark
+from particle import Particle, spawn_particle
+from spark import Spark
 
 
 class PhysicsEntity:
