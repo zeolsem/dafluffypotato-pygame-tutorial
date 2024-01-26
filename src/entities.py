@@ -1,7 +1,7 @@
 import random
-
-import pygame, math
-from src.particle import Particle
+import math
+import pygame
+from src.particle import Particle, spawn_particle
 from src.spark import Spark
 
 
@@ -119,6 +119,7 @@ class PhysicsEntity:
         pos = (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1])
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), pos)
 
+
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, "enemy", pos, size)
@@ -134,6 +135,7 @@ class Enemy(PhysicsEntity):
             self.flip = not self.flip
             self.velocity[0] = 0
 
+        # handle shooting
         if self.walking:
             movement = (-0.5 if self.flip else 0.5, movement[1])
             self.walking = max(0, self.walking - 1)
@@ -142,7 +144,7 @@ class Enemy(PhysicsEntity):
                 if abs(dis[1]) < 16:
                     if self.flip and dis[0] < 0:
                         self.game.projectiles.append([[self.get_rect().centerx - 7, self.get_rect().centery], -3, 0])
-                        for i in range(4):
+                        for i in range(7):
                             self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi,
                                                           2 * random.random()))
                     if not self.flip and dis[0] > 0:
@@ -157,6 +159,7 @@ class Enemy(PhysicsEntity):
 
         super().update(tilemap, movement=movement)
 
+        # set animation
         if movement[0] != 0:
             self.set_action("run")
         else:
@@ -164,8 +167,23 @@ class Enemy(PhysicsEntity):
 
         if abs(self.game.player.dashing) >= 50:
             if self.get_rect().colliderect(self.game.player.get_rect()):
-                self.game.screenshake = max(24, self.game.screenshake)
+                self.enemy_death()
                 return True
+
+    def enemy_death(self):
+        self.game.screenshake = max(24, self.game.screenshake)
+        for i in range(0, 15):
+            # add sparks
+            angle = random.random() * math.pi * 2
+            self.game.sparks.append(Spark(self.get_rect().center, angle, 2 + random.random()))
+            # add particles
+            speed = random.random() * 5
+            velocity = [math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5]
+            p = Particle(self.game, 'particle', self.get_rect().center, velocity, frame=random.randint(0, 7))
+            self.game.particles.append(p)
+        # add 'slashing' sparks
+        self.game.sparks.append(Spark(self.get_rect().center, 0, 5))
+        self.game.sparks.append(Spark(self.get_rect().center, math.pi, 5))
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset=offset)
@@ -175,6 +193,7 @@ class Enemy(PhysicsEntity):
             surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (gun_pos[0] - 4, gun_pos[1]))
         else:
             surf.blit(self.game.assets['gun'], (gun_pos[0], gun_pos[1]))
+
 
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -200,6 +219,7 @@ class Player(PhysicsEntity):
                 self.dead = 0
             return
 
+        # limit velocity
         self.velocity[0] = min(max(-self.max_speed, self.velocity[0]), self.max_speed)
         super().update(tilemap, movement=movement)
 
@@ -211,6 +231,7 @@ class Player(PhysicsEntity):
         else:
             self.on_ground = False
 
+        # stop player sliding if he's on the floor
         for rect in tilemap.physics_rects_around(self.pos):
             if rect.top <= self.get_rect().bottom and abs(rect.centerx - self.get_rect().centerx) < 8:
                 self.slideable = False
@@ -247,11 +268,7 @@ class Player(PhysicsEntity):
                 Particle(self.game, 'particle', self.get_rect().center, p_vel, frame=random.randint(0, 7)))
         if abs(self.dashing) in {60, 50}:
             for i in range(20):
-                angle = random.random() * math.pi * 2
-                speed = random.random() * 0.5 + 0.5
-                p_vel = [math.cos(angle) * speed, math.sin(angle) * speed]
-                self.game.loader.particles.append(
-                    Particle(self.game, 'particle', self.get_rect().center, p_vel, frame=random.randint(0, 7)))
+                spawn_particle(self.game, self)
 
         if not self.collisions["down"] and self.jumps >= 2 and self.air_time > 5:
             self.jumps -= 1
@@ -282,6 +299,8 @@ class Player(PhysicsEntity):
         return False
 
     def dash(self, direction):
+        if self.dead:
+            return
         if not self.dashing:
             if direction == 1:
                 self.dashing = 60

@@ -6,7 +6,7 @@ import random
 from src import keyboard
 from src.entities import Player
 from src.level_loader import LevelLoader
-from src.particle import Particle
+from src.particle import spawn_particle
 from src.spark import Spark
 from src.utils import load_image, load_images, Animation
 from src.tilemap import Tilemap
@@ -18,7 +18,8 @@ class Game:
         self.projectiles = []
         pygame.display.set_caption("Ninja game by DaFluffyPotato")
         self.screen = pygame.display.set_mode((1280, 960))
-        self.display = pygame.Surface((320, 240))
+        self.display = pygame.Surface((320, 240), pygame.SRCALPHA)
+        self.display_2 = pygame.Surface((320, 240))
 
         self.assets = {
             'decor': load_images('tiles/decor'),
@@ -89,10 +90,6 @@ class Game:
             enemy.render(self.display, offset=self.render_scroll)
             if kill:
                 self.enemies.remove(enemy)
-                self.sparks.append(Spark(enemy.get_rect().center, 0, 5))
-                self.sparks.append(Spark(enemy.get_rect().center, math.pi, 5))
-                for i in range(0, 15):
-                    self.sparks.append(Spark(enemy.get_rect().center, random.random() * math.pi * 2, 2 * random.random()))
 
     def process_events(self):
         keys = self.keys
@@ -152,37 +149,37 @@ class Game:
                     self.player.dead += 1
                     self.screenshake = max(32, self.screenshake)
                     for i in range(20):
-                        angle = random.random() * math.pi * 2
-                        speed = random.random() * 5
-                        self.sparks.append(Spark(projectile[0], angle, 2 + random.random()))
-                        self.loader.particles.append(Particle(self, 'particle',
-                                                              self.player.get_rect().center,
-                                                              velocity=[math.cos(angle) * speed * 0.5,
-                                                                        math.sin(angle) * speed * 0.5],
-                                                              frame=random.randint(0, 7)))
+                        spawn_particle(self, self.player)
+                        Spark.spawn_spark(self, projectile)
 
     def run(self):
         running = True
         while running:
-            self.display.blit(self.assets["background"], (0, 0))
+            self.display.fill((0, 0, 0, 0))
+            self.display_2.blit(self.assets["background"], (0, 0))
 
+            # update game logic
             self.player.update(self.tilemap, (self.player_movement_x[0] - self.player_movement_x[1], 0))
 
             self.update_camera()
 
             self.clouds.update()
-            self.clouds.render(self.display, self.render_scroll)
+            self.clouds.render(self.display_2, self.render_scroll)
 
             self.tilemap.render(self.display, self.render_scroll)
+
+            self.update_enemies() # ALSO RENDERS ENEMIES
+            self.player.render(self.display, self.render_scroll)
+            # outlines
+            display_mask = pygame.mask.from_surface(self.display)
+            display_sillhouette = display_mask.to_surface(setcolor=(0, 0, 0, 180), unsetcolor=(0, 0, 0, 0))
+            for offset in ((-1, 0), (1, 0), (0, 1), (0, -1)):
+                self.display_2.blit(display_sillhouette, (offset[0], offset[1]))
+
             self.handle_projectiles()
 
             self.loader.spawn_particles()
             self.loader.draw_particles()
-
-            self.update_enemies() # ALSO RENDERS ENEMIES
-            self.player.render(self.display, self.render_scroll)
-
-            # [[x, y], direction, timer]
 
             self.draw_sparks()
 
@@ -193,7 +190,11 @@ class Game:
             self.loader.eval_transition()
             screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
             self.screenshake = max(0, self.screenshake - 1)
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)
+
+            # self.display_2.blit(display_sillhouette, (0, 0))
+            self.display_2.blit(self.display, (0, 0))
+
+            self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screenshake_offset)
             pygame.display.update()
             self.clock.tick(60)
             pygame.display.set_caption("Ninja game by DaFluffyPotato | FPS: " + str(int(self.clock.get_fps())))
